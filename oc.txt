@@ -1,0 +1,2055 @@
+-- Ana servisler
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
+local TextChatService = game:GetService("TextChatService")
+
+-- Değişkenler
+local guiEnabled = true
+local minimized = false
+local currentPage = "MAIN"
+local flyEnabled = false
+local noclipEnabled = false
+local spinEnabled = false
+local invisibleEnabled = false
+local connections = {}
+
+-- YENİ: 5 özellik için değişkenler
+local espEnabled = false
+local espConnections = {}
+local espHighlights = {}
+local fullbrightEnabled = false
+local fullbrightConnection = nil
+local chatSpyEnabled = false
+local chatSpyConnection = nil
+local spyGui = nil
+
+-- GUI tabloları
+local LMG2L = {}
+
+-- ===== 6 SANİYELİK CMD AÇILIŞ EKRANI =====
+local function createIntro()
+    local introGui = Instance.new("ScreenGui")
+    introGui.Name = "IntroUI"
+    introGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    introGui.IgnoreGuiInset = true
+    introGui.ResetOnSpawn = false
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+    MainFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
+    MainFrame.BorderSizePixel = 2
+    MainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
+    MainFrame.Size = UDim2.new(0, 800, 0, 500)
+    MainFrame.Active = true
+    MainFrame.ClipsDescendants = true
+    MainFrame.Parent = introGui
+
+    local TitleBar = Instance.new("Frame")
+    TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Size = UDim2.new(1, 0, 0, 30)
+    TitleBar.Parent = MainFrame
+
+    local TitleText = Instance.new("TextLabel")
+    TitleText.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TitleText.BorderSizePixel = 0
+    TitleText.Size = UDim2.new(1, 0, 1, 0)
+    TitleText.Font = Enum.Font.SourceSans
+    TitleText.Text = "Administrator: Command Prompt - OK-13"
+    TitleText.TextColor3 = Color3.fromRGB(240, 240, 240)
+    TitleText.TextSize = 14
+    TitleText.TextXAlignment = Enum.TextXAlignment.Left
+    TitleText.Parent = TitleBar
+
+    local CmdFrame = Instance.new("Frame")
+    CmdFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    CmdFrame.BorderColor3 = Color3.fromRGB(30, 30, 30)
+    CmdFrame.BorderSizePixel = 1
+    CmdFrame.Position = UDim2.new(0, 2, 0, 32)
+    CmdFrame.Size = UDim2.new(1, -4, 1, -34)
+    CmdFrame.Parent = MainFrame
+
+    local CmdText = Instance.new("ScrollingFrame")
+    CmdText.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    CmdText.BorderSizePixel = 0
+    CmdText.Size = UDim2.new(1, 0, 1, 0)
+    CmdText.CanvasSize = UDim2.new(0, 0, 10, 0)
+    CmdText.ScrollBarThickness = 12
+    CmdText.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+    CmdText.Parent = CmdFrame
+
+    local CmdOutput = Instance.new("TextLabel")
+    CmdOutput.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    CmdOutput.BorderSizePixel = 0
+    CmdOutput.Size = UDim2.new(1, -15, 10, 0)
+    CmdOutput.Font = Enum.Font.Code
+    CmdOutput.Text = ""
+    CmdOutput.TextColor3 = Color3.fromRGB(220, 220, 220)
+    CmdOutput.TextSize = 14
+    CmdOutput.TextXAlignment = Enum.TextXAlignment.Left
+    CmdOutput.TextYAlignment = Enum.TextYAlignment.Top
+    CmdOutput.RichText = true
+    CmdOutput.Parent = CmdText
+
+    local cmdLines = {
+        "Microsoft Windows [Version 10.0.19045.3693]",
+        "(c) Microsoft Corporation. Tüm hakları saklıdır.",
+        "",
+        "C:\\Users\\Administrator>sfc /scannow",
+        "Beginning system scan...",
+        "Verification 25% complete.",
+        "Verification 50% complete.",
+        "Verification 75% complete.",
+        "Verification 100% complete.",
+        "Windows Resource Protection found corrupt files.",
+        "",
+        "C:\\Windows\\System32>OK-13 --init",
+        ">> OK-13 SYSTEM INTEGRATION v2.0",
+        ">> Initializing core modules...",
+        ">> [████░░░░░░] 25%",
+        ">> [████████░░] 50%",
+        ">> [████████████] 75%",
+        ">> [████████████████] 100%",
+        ">> OK-13 successfully loaded!",
+        "C:\\Windows\\System32>"
+    }
+
+    local function AddCMDLine(text)
+        local currentText = CmdOutput.Text
+        if currentText == "" then
+            CmdOutput.Text = text
+        else
+            CmdOutput.Text = currentText .. "\n" .. text
+        end
+        
+        CmdText.CanvasPosition = Vector2.new(0, CmdText.CanvasSize.Y.Offset)
+        local lineCount = #CmdOutput.Text:split("\n")
+        CmdOutput.Size = UDim2.new(1, -15, 0, lineCount * 18)
+        CmdText.CanvasSize = UDim2.new(0, 0, 0, lineCount * 18)
+    end
+
+    delay(6, function()
+        local fadeTween = TweenService:Create(MainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+        fadeTween:Play()
+        
+        for _, obj in ipairs(MainFrame:GetDescendants()) do
+            if obj:IsA("TextLabel") then
+                TweenService:Create(obj, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+            elseif obj:IsA("Frame") then
+                TweenService:Create(obj, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+            end
+        end
+        
+        fadeTween.Completed:Wait()
+        introGui:Destroy()
+        print("🚀 OK-13 GUI aktif!")
+    end)
+
+    spawn(function()
+        local startTime = tick()
+        while tick() - startTime < 0.5 do
+            wait(0.05)
+            local step = math.floor((tick() - startTime) * 10) % 4
+            local cursorLine = "C:\\Windows\\System32>" .. string.rep(" ", step) .. "_"
+            CmdOutput.Text = "Microsoft Windows [Version 10.0.19045.3693]\n(c) Microsoft Corporation. Tüm hakları saklıdır.\n\n" .. cursorLine
+        end
+        
+        local writeStart = tick()
+        local totalLines = #cmdLines
+        
+        for i, line in ipairs(cmdLines) do
+            AddCMDLine(line)
+            
+            local elapsed = tick() - writeStart
+            local remaining = 5 - elapsed
+            local linesLeft = totalLines - i
+            
+            if linesLeft > 0 and remaining > 0 then
+                wait(math.min(0.15, remaining / linesLeft))
+            else
+                wait(0.05)
+            end
+        end
+        
+        local lastLine = Instance.new("TextLabel")
+        lastLine.Parent = CmdText
+        lastLine.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+        lastLine.BorderSizePixel = 0
+        lastLine.Font = Enum.Font.Code
+        lastLine.Text = "C:\\Windows\\System32>_"
+        lastLine.TextColor3 = Color3.fromRGB(220, 220, 220)
+        lastLine.TextSize = 14
+        lastLine.TextXAlignment = Enum.TextXAlignment.Left
+        lastLine.Position = UDim2.new(0, 5, 0, (#cmdLines + 1) * 18)
+        lastLine.Size = UDim2.new(1, -20, 0, 18)
+        
+        while tick() - startTime < 5.5 do
+            wait(0.3)
+            lastLine.Text = "C:\\Windows\\System32>"
+            wait(0.3)
+            lastLine.Text = "C:\\Windows\\System32>_"
+        end
+    end)
+end
+
+spawn(createIntro)
+
+-- ===== ANA GUI OLUŞTURMA =====
+LMG2L["ScreenGui_1"] = Instance.new("ScreenGui")
+LMG2L["ScreenGui_1"].Parent = LocalPlayer:WaitForChild("PlayerGui")
+LMG2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling
+LMG2L["ScreenGui_1"].Name = "OK13_Admin_GUI"
+LMG2L["ScreenGui_1"].ResetOnSpawn = false
+
+-- Sol panel
+LMG2L["Frame_2"] = Instance.new("Frame", LMG2L["ScreenGui_1"])
+LMG2L["Frame_2"]["BorderSizePixel"] = 0
+LMG2L["Frame_2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["Frame_2"]["Size"] = UDim2.new(0, 116, 0, 326)
+LMG2L["Frame_2"]["Position"] = UDim2.new(0.5, -250, 0.5, -163)
+LMG2L["Frame_2"]["BackgroundTransparency"] = 1
+LMG2L["Frame_2"].Name = "SolPanel"
+
+LMG2L["UICorner_3"] = Instance.new("UICorner", LMG2L["Frame_2"])
+LMG2L["UIStroke_4"] = Instance.new("UIStroke", LMG2L["Frame_2"])
+
+LMG2L["ImageLabel_5"] = Instance.new("ImageLabel", LMG2L["Frame_2"])
+LMG2L["ImageLabel_5"]["BorderSizePixel"] = 0
+LMG2L["ImageLabel_5"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["ImageLabel_5"]["Image"] = "rbxassetid://92395758083316"
+LMG2L["ImageLabel_5"]["Size"] = UDim2.new(0, 112, 0, 322)
+LMG2L["ImageLabel_5"]["Position"] = UDim2.new(0, 2, 0, 2)
+
+LMG2L["UICorner_6"] = Instance.new("UICorner", LMG2L["ImageLabel_5"])
+
+-- Sağ panel
+LMG2L["Frame_7"] = Instance.new("Frame", LMG2L["Frame_2"])
+LMG2L["Frame_7"]["BorderSizePixel"] = 0
+LMG2L["Frame_7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["Frame_7"]["Size"] = UDim2.new(0, 400, 0, 324)
+LMG2L["Frame_7"]["Position"] = UDim2.new(0, 130, 0, 0)
+LMG2L["Frame_7"]["BackgroundTransparency"] = 0.3
+LMG2L["Frame_7"].Visible = false
+LMG2L["Frame_7"].Name = "SagPanel"
+
+LMG2L["UICorner_8"] = Instance.new("UICorner", LMG2L["Frame_7"])
+LMG2L["UIStroke_9"] = Instance.new("UIStroke", LMG2L["Frame_7"])
+
+LMG2L["ImageLabel_a"] = Instance.new("ImageLabel", LMG2L["Frame_7"])
+LMG2L["ImageLabel_a"]["BorderSizePixel"] = 0
+LMG2L["ImageLabel_a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["ImageLabel_a"]["Image"] = "rbxassetid://92395758083316"
+LMG2L["ImageLabel_a"]["Size"] = UDim2.new(0, 396, 0, 320)
+LMG2L["ImageLabel_a"]["Position"] = UDim2.new(0, 2, 0, 2)
+
+LMG2L["UICorner_b"] = Instance.new("UICorner", LMG2L["ImageLabel_a"])
+
+-- Pencere kontrol butonları
+LMG2L["TextButton_c"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_c"]["BorderSizePixel"] = 0
+LMG2L["TextButton_c"]["TextSize"] = 24
+LMG2L["TextButton_c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextButton_c"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_c"]["BackgroundTransparency"] = 1
+LMG2L["TextButton_c"]["Size"] = UDim2.new(0, 20, 0, 18)
+LMG2L["TextButton_c"]["Text"] = "X"
+LMG2L["TextButton_c"]["Position"] = UDim2.new(0, 378, 0, 2)
+LMG2L["TextButton_c"].Name = "KapatButonu"
+
+LMG2L["TextButton_d"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_d"]["BorderSizePixel"] = 0
+LMG2L["TextButton_d"]["TextSize"] = 24
+LMG2L["TextButton_d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextButton_d"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_d"]["BackgroundTransparency"] = 1
+LMG2L["TextButton_d"]["Size"] = UDim2.new(0, 18, 0, 18)
+LMG2L["TextButton_d"]["Text"] = "_"
+LMG2L["TextButton_d"]["Position"] = UDim2.new(0, 360, 0, 2)
+LMG2L["TextButton_d"].Name = "KucultButonu"
+
+-- ===== ÜST SATIR BUTONLARI =====
+LMG2L["TextButton_e"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_e"]["BorderSizePixel"] = 0
+LMG2L["TextButton_e"]["TextSize"] = 24
+LMG2L["TextButton_e"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_e"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_e"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_e"]["Size"] = UDim2.new(0, 80, 0, 30)
+LMG2L["TextButton_e"]["Text"] = "FLY"
+LMG2L["TextButton_e"]["Position"] = UDim2.new(0, 14, 0, 14)
+
+LMG2L["UICorner_f"] = Instance.new("UICorner", LMG2L["TextButton_e"])
+
+LMG2L["TextButton_10"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_10"]["BorderSizePixel"] = 0
+LMG2L["TextButton_10"]["TextSize"] = 24
+LMG2L["TextButton_10"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_10"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_10"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_10"]["Size"] = UDim2.new(0, 80, 0, 30)
+LMG2L["TextButton_10"]["Text"] = "NOCLİP"
+LMG2L["TextButton_10"]["Position"] = UDim2.new(0, 98, 0, 14)
+
+LMG2L["UICorner_11"] = Instance.new("UICorner", LMG2L["TextButton_10"])
+
+LMG2L["TextButton_12"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_12"]["BorderSizePixel"] = 0
+LMG2L["TextButton_12"]["TextSize"] = 24
+LMG2L["TextButton_12"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_12"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_12"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_12"]["Size"] = UDim2.new(0, 80, 0, 30)
+LMG2L["TextButton_12"]["Text"] = "RESET"
+LMG2L["TextButton_12"]["Position"] = UDim2.new(0, 182, 0, 14)
+
+LMG2L["UICorner_13"] = Instance.new("UICorner", LMG2L["TextButton_12"])
+
+LMG2L["TextButton_14"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_14"]["BorderSizePixel"] = 0
+LMG2L["TextButton_14"]["TextSize"] = 24
+LMG2L["TextButton_14"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_14"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_14"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_14"]["Size"] = UDim2.new(0, 80, 0, 30)
+LMG2L["TextButton_14"]["Text"] = "F3X"
+LMG2L["TextButton_14"]["Position"] = UDim2.new(0, 266, 0, 14)
+
+LMG2L["UICorner_15"] = Instance.new("UICorner", LMG2L["TextButton_14"])
+
+-- ===== YENİ: 4. SATIR BUTONLARI (ESP, FULLBRIGHT, SERVER HOP, CHAT SPY) =====
+-- REJOIN, SPAWN PT, TELEPORT, FAKE IP'nin yerine bunlar gelecek
+
+LMG2L["TextButton_ESP"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_ESP"]["BorderSizePixel"] = 0
+LMG2L["TextButton_ESP"]["TextSize"] = 24
+LMG2L["TextButton_ESP"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_ESP"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_ESP"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_ESP"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_ESP"]["Text"] = "ESP"
+LMG2L["TextButton_ESP"]["Position"] = UDim2.new(0, 18, 0, 162)
+
+LMG2L["UICorner_ESP"] = Instance.new("UICorner", LMG2L["TextButton_ESP"])
+
+LMG2L["TextButton_FB"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_FB"]["BorderSizePixel"] = 0
+LMG2L["TextButton_FB"]["TextSize"] = 24
+LMG2L["TextButton_FB"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_FB"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_FB"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_FB"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_FB"]["Text"] = "FULLBRIGHT"
+LMG2L["TextButton_FB"]["Position"] = UDim2.new(0, 102, 0, 162)
+
+LMG2L["UICorner_FB"] = Instance.new("UICorner", LMG2L["TextButton_FB"])
+
+LMG2L["TextButton_SH"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_SH"]["BorderSizePixel"] = 0
+LMG2L["TextButton_SH"]["TextSize"] = 24
+LMG2L["TextButton_SH"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_SH"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_SH"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_SH"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_SH"]["Text"] = "SERVER HOP"
+LMG2L["TextButton_SH"]["Position"] = UDim2.new(0, 186, 0, 162)
+
+LMG2L["UICorner_SH"] = Instance.new("UICorner", LMG2L["TextButton_SH"])
+
+LMG2L["TextButton_CS"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_CS"]["BorderSizePixel"] = 0
+LMG2L["TextButton_CS"]["TextSize"] = 24
+LMG2L["TextButton_CS"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_CS"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_CS"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_CS"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_CS"]["Text"] = "CHAT SPY"
+LMG2L["TextButton_CS"]["Position"] = UDim2.new(0, 270, 0, 162)
+
+LMG2L["UICorner_CS"] = Instance.new("UICorner", LMG2L["TextButton_CS"])
+
+-- Speed, JumpPower, Spin (Değişmedi)
+LMG2L["TextBox_1c"] = Instance.new("TextBox", LMG2L["Frame_7"])
+LMG2L["TextBox_1c"]["BorderSizePixel"] = 0
+LMG2L["TextBox_1c"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextBox_1c"]["Size"] = UDim2.new(0, 228, 0, 28)
+LMG2L["TextBox_1c"]["Position"] = UDim2.new(0, 16, 0, 58)
+LMG2L["TextBox_1c"]["Text"] = "SPEED.. "
+LMG2L["TextBox_1c"]["PlaceholderText"] = "Speed değeri"
+LMG2L["TextBox_1c"]["BackgroundTransparency"] = 0.9
+LMG2L["TextBox_1c"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+
+LMG2L["UICorner_1d"] = Instance.new("UICorner", LMG2L["TextBox_1c"])
+
+LMG2L["TextButton_16"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_16"]["BorderSizePixel"] = 0
+LMG2L["TextButton_16"]["TextSize"] = 24
+LMG2L["TextButton_16"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_16"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_16"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_16"]["Size"] = UDim2.new(0, 98, 0, 30)
+LMG2L["TextButton_16"]["Text"] = "SET"
+LMG2L["TextButton_16"]["Position"] = UDim2.new(0, 252, 0, 56)
+
+LMG2L["UICorner_17"] = Instance.new("UICorner", LMG2L["TextButton_16"])
+
+LMG2L["TextBox_1e"] = Instance.new("TextBox", LMG2L["Frame_7"])
+LMG2L["TextBox_1e"]["BorderSizePixel"] = 0
+LMG2L["TextBox_1e"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextBox_1e"]["Size"] = UDim2.new(0, 228, 0, 28)
+LMG2L["TextBox_1e"]["Position"] = UDim2.new(0, 16, 0, 90)
+LMG2L["TextBox_1e"]["Text"] = "JUMPPOWER.. "
+LMG2L["TextBox_1e"]["PlaceholderText"] = "JumpPower değeri"
+LMG2L["TextBox_1e"]["BackgroundTransparency"] = 0.9
+LMG2L["TextBox_1e"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+
+LMG2L["UICorner_1f"] = Instance.new("UICorner", LMG2L["TextBox_1e"])
+
+LMG2L["TextButton_18"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_18"]["BorderSizePixel"] = 0
+LMG2L["TextButton_18"]["TextSize"] = 24
+LMG2L["TextButton_18"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_18"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_18"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_18"]["Size"] = UDim2.new(0, 98, 0, 30)
+LMG2L["TextButton_18"]["Text"] = "SET"
+LMG2L["TextButton_18"]["Position"] = UDim2.new(0, 252, 0, 88)
+
+LMG2L["UICorner_19"] = Instance.new("UICorner", LMG2L["TextButton_18"])
+
+LMG2L["TextBox_20"] = Instance.new("TextBox", LMG2L["Frame_7"])
+LMG2L["TextBox_20"]["BorderSizePixel"] = 0
+LMG2L["TextBox_20"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextBox_20"]["Size"] = UDim2.new(0, 228, 0, 28)
+LMG2L["TextBox_20"]["Position"] = UDim2.new(0, 16, 0, 122)
+LMG2L["TextBox_20"]["Text"] = "SPİN... "
+LMG2L["TextBox_20"]["PlaceholderText"] = "Spin hızı"
+LMG2L["TextBox_20"]["BackgroundTransparency"] = 0.9
+LMG2L["TextBox_20"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+
+LMG2L["UICorner_21"] = Instance.new("UICorner", LMG2L["TextBox_20"])
+
+LMG2L["TextButton_1a"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_1a"]["BorderSizePixel"] = 0
+LMG2L["TextButton_1a"]["TextSize"] = 24
+LMG2L["TextButton_1a"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_1a"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_1a"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_1a"]["Size"] = UDim2.new(0, 98, 0, 30)
+LMG2L["TextButton_1a"]["Text"] = "SET"
+LMG2L["TextButton_1a"]["Position"] = UDim2.new(0, 252, 0, 120)
+
+LMG2L["UICorner_1b"] = Instance.new("UICorner", LMG2L["TextButton_1a"])
+
+-- 5. SATIR: REJOIN, SPAWN PT, TELEPORT, FAKE IP (Aşağı kaydırıldı)
+LMG2L["TextButton_22"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_22"]["BorderSizePixel"] = 0
+LMG2L["TextButton_22"]["TextSize"] = 24
+LMG2L["TextButton_22"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_22"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_22"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_22"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_22"]["Text"] = "REJOİN"
+LMG2L["TextButton_22"]["Position"] = UDim2.new(0, 18, 0, 194)
+
+LMG2L["UICorner_31"] = Instance.new("UICorner", LMG2L["TextButton_22"])
+
+LMG2L["TextButton_23"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_23"]["BorderSizePixel"] = 0
+LMG2L["TextButton_23"]["TextSize"] = 24
+LMG2L["TextButton_23"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_23"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_23"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_23"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_23"]["Text"] = "SPAWN PT"
+LMG2L["TextButton_23"]["Position"] = UDim2.new(0, 102, 0, 194)
+
+LMG2L["UICorner_24"] = Instance.new("UICorner", LMG2L["TextButton_23"])
+
+LMG2L["TextButton_25"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_25"]["BorderSizePixel"] = 0
+LMG2L["TextButton_25"]["TextSize"] = 24
+LMG2L["TextButton_25"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_25"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_25"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_25"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_25"]["Text"] = "TELEPORT"
+LMG2L["TextButton_25"]["Position"] = UDim2.new(0, 186, 0, 194)
+
+LMG2L["UICorner_26"] = Instance.new("UICorner", LMG2L["TextButton_25"])
+
+LMG2L["TextButton_27"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_27"]["BorderSizePixel"] = 0
+LMG2L["TextButton_27"]["TextSize"] = 24
+LMG2L["TextButton_27"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_27"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_27"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_27"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_27"]["Text"] = "FAKE İP"
+LMG2L["TextButton_27"]["Position"] = UDim2.new(0, 270, 0, 194)
+
+LMG2L["UICorner_28"] = Instance.new("UICorner", LMG2L["TextButton_27"])
+
+-- 6. SATIR: KİLL, FLİNG, İNVİSİBLE, :) (Aşağı kaydırıldı)
+LMG2L["TextButton_29"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_29"]["BorderSizePixel"] = 0
+LMG2L["TextButton_29"]["TextSize"] = 24
+LMG2L["TextButton_29"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_29"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_29"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_29"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_29"]["Text"] = "KİLL"
+LMG2L["TextButton_29"]["Position"] = UDim2.new(0, 18, 0, 226)
+
+LMG2L["UICorner_2a"] = Instance.new("UICorner", LMG2L["TextButton_29"])
+
+LMG2L["TextButton_2b"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_2b"]["BorderSizePixel"] = 0
+LMG2L["TextButton_2b"]["TextSize"] = 24
+LMG2L["TextButton_2b"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_2b"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_2b"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_2b"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_2b"]["Text"] = "FLİNG"
+LMG2L["TextButton_2b"]["Position"] = UDim2.new(0, 102, 0, 226)
+
+LMG2L["UICorner_2c"] = Instance.new("UICorner", LMG2L["TextButton_2b"])
+
+LMG2L["TextButton_2d"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_2d"]["BorderSizePixel"] = 0
+LMG2L["TextButton_2d"]["TextSize"] = 24
+LMG2L["TextButton_2d"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_2d"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_2d"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_2d"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_2d"]["Text"] = "İNVİSİBLE"
+LMG2L["TextButton_2d"]["Position"] = UDim2.new(0, 186, 0, 226)
+
+LMG2L["UICorner_2e"] = Instance.new("UICorner", LMG2L["TextButton_2d"])
+
+LMG2L["TextButton_2f"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_2f"]["BorderSizePixel"] = 0
+LMG2L["TextButton_2f"]["TextSize"] = 24
+LMG2L["TextButton_2f"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_2f"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_2f"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_2f"]["Size"] = UDim2.new(0, 78, 0, 28)
+LMG2L["TextButton_2f"]["Text"] = ":) "
+LMG2L["TextButton_2f"]["Position"] = UDim2.new(0, 270, 0, 226)
+
+LMG2L["UICorner_30"] = Instance.new("UICorner", LMG2L["TextButton_2f"])
+
+-- Yan yazı (Pozisyon güncellendi)
+LMG2L["TextLabel_32"] = Instance.new("TextLabel", LMG2L["Frame_7"])
+LMG2L["TextLabel_32"]["BorderSizePixel"] = 0
+LMG2L["TextLabel_32"]["TextSize"] = 36
+LMG2L["TextLabel_32"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_32"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextLabel_32"]["BackgroundTransparency"] = 1
+LMG2L["TextLabel_32"]["Size"] = UDim2.new(0, 18, 0, 48)
+LMG2L["TextLabel_32"]["Text"] = "OK-13  &  ADMIN"
+LMG2L["TextLabel_32"]["Rotation"] = 90
+LMG2L["TextLabel_32"]["Position"] = UDim2.new(0, 370, 0, 168)
+
+-- Backdoor scan (Aşağı kaydırıldı)
+LMG2L["TextLabel_33"] = Instance.new("TextLabel", LMG2L["Frame_7"])
+LMG2L["TextLabel_33"]["BorderSizePixel"] = 0
+LMG2L["TextLabel_33"]["TextSize"] = 18
+LMG2L["TextLabel_33"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextLabel_33"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextLabel_33"]["BackgroundTransparency"] = 0.95
+LMG2L["TextLabel_33"]["Size"] = UDim2.new(0, 118, 0, 22)
+LMG2L["TextLabel_33"]["Text"] = "BACKDOOR-FİNDED"
+LMG2L["TextLabel_33"]["Position"] = UDim2.new(0, 18, 0, 266)
+
+LMG2L["TextButton_34"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_34"]["BorderSizePixel"] = 0
+LMG2L["TextButton_34"]["TextSize"] = 24
+LMG2L["TextButton_34"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_34"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_34"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_34"]["Size"] = UDim2.new(0, 80, 0, 24)
+LMG2L["TextButton_34"]["Text"] = "SCAN"
+LMG2L["TextButton_34"]["Position"] = UDim2.new(0, 144, 0, 266)
+
+LMG2L["UICorner_35"] = Instance.new("UICorner", LMG2L["TextButton_34"])
+LMG2L["UICorner_36"] = Instance.new("UICorner", LMG2L["TextLabel_33"])
+
+-- Require (Aşağı kaydırıldı)
+LMG2L["TextBox_37"] = Instance.new("TextBox", LMG2L["Frame_7"])
+LMG2L["TextBox_37"]["TextXAlignment"] = Enum.TextXAlignment.Left
+LMG2L["TextBox_37"]["BorderSizePixel"] = 0
+LMG2L["TextBox_37"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextBox_37"]["Size"] = UDim2.new(0, 204, 0, 22)
+LMG2L["TextBox_37"]["Position"] = UDim2.new(0, 18, 0, 292)
+LMG2L["TextBox_37"]["Text"] = "REQUİRE.(1234) "
+LMG2L["TextBox_37"]["PlaceholderText"] = "Script ID girin"
+LMG2L["TextBox_37"]["BackgroundTransparency"] = 0.95
+LMG2L["TextBox_37"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+
+LMG2L["UICorner_38"] = Instance.new("UICorner", LMG2L["TextBox_37"])
+
+LMG2L["TextButton_39"] = Instance.new("TextButton", LMG2L["Frame_7"])
+LMG2L["TextButton_39"]["BorderSizePixel"] = 0
+LMG2L["TextButton_39"]["TextSize"] = 18
+LMG2L["TextButton_39"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_39"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_39"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_39"]["Size"] = UDim2.new(0, 66, 0, 26)
+LMG2L["TextButton_39"]["Text"] = "EXECUTE"
+LMG2L["TextButton_39"]["Position"] = UDim2.new(0, 228, 0, 290)
+
+LMG2L["UICorner_3a"] = Instance.new("UICorner", LMG2L["TextButton_39"])
+
+-- ===== SOL PANEL İÇERİĞİ =====
+LMG2L["ImageLabel_3b"] = Instance.new("ImageLabel", LMG2L["Frame_2"])
+LMG2L["ImageLabel_3b"]["BorderSizePixel"] = 0
+LMG2L["ImageLabel_3b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["ImageLabel_3b"]["Size"] = UDim2.new(0, 90, 0, 90)
+LMG2L["ImageLabel_3b"]["Position"] = UDim2.new(0, 12, 0, 12)
+
+LMG2L["UICorner_3c"] = Instance.new("UICorner", LMG2L["ImageLabel_3b"])
+LMG2L["UIStroke_3d"] = Instance.new("UIStroke", LMG2L["ImageLabel_3b"])
+LMG2L["UIStroke_3d"]["Thickness"] = 0.1
+
+LMG2L["TextLabel_3e"] = Instance.new("TextLabel", LMG2L["Frame_2"])
+LMG2L["TextLabel_3e"]["BorderSizePixel"] = 0
+LMG2L["TextLabel_3e"]["TextSize"] = 18
+LMG2L["TextLabel_3e"]["TextXAlignment"] = Enum.TextXAlignment.Left
+LMG2L["TextLabel_3e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_3e"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextLabel_3e"]["BackgroundTransparency"] = 1
+LMG2L["TextLabel_3e"]["Size"] = UDim2.new(0, 88, 0, 18)
+LMG2L["TextLabel_3e"]["Text"] = "Hİ, " .. LocalPlayer.Name
+LMG2L["TextLabel_3e"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_3e"]["Position"] = UDim2.new(0, 14, 0, 106)
+
+LMG2L["TextLabel_3f"] = Instance.new("TextLabel", LMG2L["Frame_2"])
+LMG2L["TextLabel_3f"]["BorderSizePixel"] = 0
+LMG2L["TextLabel_3f"]["TextSize"] = 18
+LMG2L["TextLabel_3f"]["TextXAlignment"] = Enum.TextXAlignment.Left
+LMG2L["TextLabel_3f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_3f"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextLabel_3f"]["BackgroundTransparency"] = 1
+LMG2L["TextLabel_3f"]["Size"] = UDim2.new(0, 88, 0, 18)
+LMG2L["TextLabel_3f"]["Text"] = "@" .. LocalPlayer.DisplayName
+LMG2L["TextLabel_3f"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_3f"]["Position"] = UDim2.new(0, 14, 0, 124)
+
+LMG2L["TextLabel_40"] = Instance.new("TextLabel", LMG2L["Frame_2"])
+LMG2L["TextLabel_40"]["BorderSizePixel"] = 0
+LMG2L["TextLabel_40"]["TextSize"] = 18
+LMG2L["TextLabel_40"]["TextXAlignment"] = Enum.TextXAlignment.Left
+LMG2L["TextLabel_40"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_40"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextLabel_40"]["BackgroundTransparency"] = 1
+LMG2L["TextLabel_40"]["Size"] = UDim2.new(0, 88, 0, 18)
+LMG2L["TextLabel_40"]["Text"] = "İD: " .. LocalPlayer.UserId
+LMG2L["TextLabel_40"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_40"]["Position"] = UDim2.new(0, 14, 0, 144)
+
+LMG2L["TextButton_41"] = Instance.new("TextButton", LMG2L["Frame_2"])
+LMG2L["TextButton_41"]["BorderSizePixel"] = 0
+LMG2L["TextButton_41"]["TextSize"] = 24
+LMG2L["TextButton_41"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_41"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_41"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_41"]["Size"] = UDim2.new(0, 90, 0, 30)
+LMG2L["TextButton_41"]["Text"] = "MAİN PAGE"
+LMG2L["TextButton_41"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextButton_41"]["Position"] = UDim2.new(0, 12, 0, 178)
+
+LMG2L["UICorner_42"] = Instance.new("UICorner", LMG2L["TextButton_41"])
+
+LMG2L["TextButton_43"] = Instance.new("TextButton", LMG2L["Frame_2"])
+LMG2L["TextButton_43"]["BorderSizePixel"] = 0
+LMG2L["TextButton_43"]["TextSize"] = 24
+LMG2L["TextButton_43"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_43"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_43"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_43"]["Size"] = UDim2.new(0, 90, 0, 30)
+LMG2L["TextButton_43"]["Text"] = "SEACH SC"
+LMG2L["TextButton_43"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextButton_43"]["Position"] = UDim2.new(0, 12, 0, 212)
+
+LMG2L["UICorner_44"] = Instance.new("UICorner", LMG2L["TextButton_43"])
+
+LMG2L["TextButton_45"] = Instance.new("TextButton", LMG2L["Frame_2"])
+LMG2L["TextButton_45"]["BorderSizePixel"] = 0
+LMG2L["TextButton_45"]["TextSize"] = 24
+LMG2L["TextButton_45"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+LMG2L["TextButton_45"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_45"]["BackgroundTransparency"] = 0.9
+LMG2L["TextButton_45"]["Size"] = UDim2.new(0, 90, 0, 30)
+LMG2L["TextButton_45"]["Text"] = "CODE"
+LMG2L["TextButton_45"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextButton_45"]["Position"] = UDim2.new(0, 12, 0, 246)
+
+LMG2L["UICorner_46"] = Instance.new("UICorner", LMG2L["TextButton_45"])
+
+LMG2L["TextLabel_47"] = Instance.new("TextLabel", LMG2L["Frame_2"])
+LMG2L["TextLabel_47"]["BorderSizePixel"] = 0
+LMG2L["TextLabel_47"]["TextSize"] = 11
+LMG2L["TextLabel_47"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_47"]["FontFace"] = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+LMG2L["TextLabel_47"]["BackgroundTransparency"] = 1
+LMG2L["TextLabel_47"]["Size"] = UDim2.new(0, 18, 0, 16)
+LMG2L["TextLabel_47"]["Text"] = "0.1 NEW Uİ"
+LMG2L["TextLabel_47"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextLabel_47"]["Position"] = UDim2.new(0, 28, 0, 304)
+
+LMG2L["UIDragDetector_48"] = Instance.new("UIDragDetector", LMG2L["Frame_2"])
+
+LMG2L["TextButton_49"] = Instance.new("TextButton", LMG2L["ScreenGui_1"])
+LMG2L["TextButton_49"]["BorderSizePixel"] = 0
+LMG2L["TextButton_49"]["TextSize"] = 36
+LMG2L["TextButton_49"]["BackgroundColor3"] = Color3.fromRGB(122, 63, 255)
+LMG2L["TextButton_49"]["FontFace"] = Font.new("rbxasset://fonts/families/IndieFlower.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+LMG2L["TextButton_49"]["BackgroundTransparency"] = 0.3
+LMG2L["TextButton_49"]["Size"] = UDim2.new(0, 58, 0, 58)
+LMG2L["TextButton_49"]["Text"] = "OK-13"
+LMG2L["TextButton_49"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+LMG2L["TextButton_49"]["Position"] = UDim2.new(1, -120, 0, 10)
+
+LMG2L["UICorner_4a"] = Instance.new("UICorner", LMG2L["TextButton_49"])
+LMG2L["UICorner_4a"]["CornerRadius"] = UDim.new(1, 0)
+
+-- ===== YENİ 5 ÖZELLİĞİN FONKSİYONLARI =====
+
+-- 1. ESP SİSTEMİ
+local function createESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "OK13_ESP_" .. player.Name
+            highlight.Adornee = player.Character
+            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.5
+            highlight.OutlineTransparency = 0
+            highlight.Parent = CoreGui
+            
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "OK13_ESPName_" .. player.Name
+            billboard.Adornee = player.Character:FindFirstChild("Head") or player.Character:FindFirstChild("HumanoidRootPart")
+            billboard.Size = UDim2.new(0, 100, 0, 50)
+            billboard.StudsOffset = Vector3.new(0, 3, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = CoreGui
+            
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Text = player.Name
+            nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            nameLabel.TextStrokeTransparency = 0
+            nameLabel.Font = Enum.Font.GothamBold
+            nameLabel.TextSize = 14
+            nameLabel.Parent = billboard
+            
+            local distLabel = Instance.new("TextLabel")
+            distLabel.Size = UDim2.new(1, 0, 0.5, 0)
+            distLabel.Position = UDim2.new(0, 0, 0.5, 0)
+            distLabel.BackgroundTransparency = 1
+            distLabel.Text = "0m"
+            distLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            distLabel.TextStrokeTransparency = 0
+            distLabel.Font = Enum.Font.Gotham
+            distLabel.TextSize = 12
+            distLabel.Parent = billboard
+            
+            espHighlights[player] = {
+                highlight = highlight,
+                billboard = billboard,
+                distLabel = distLabel
+            }
+        end
+    end
+end
+
+local function updateESP()
+    for player, objects in pairs(espHighlights) do
+        if player.Character and LocalPlayer.Character then
+            local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local theirHRP = player.Character:FindFirstChild("HumanoidRootPart")
+            
+            if myHRP and theirHRP then
+                local distance = math.floor((myHRP.Position - theirHRP.Position).Magnitude)
+                objects.distLabel.Text = distance .. "m"
+            end
+            
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                if humanoid.Health <= 0 then
+                    objects.highlight.FillColor = Color3.fromRGB(100, 100, 100)
+                else
+                    objects.highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                end
+            end
+        end
+    end
+end
+
+local function removeESP()
+    for _, objects in pairs(espHighlights) do
+        if objects.highlight then objects.highlight:Destroy() end
+        if objects.billboard then objects.billboard:Destroy() end
+    end
+    espHighlights = {}
+end
+
+local function toggleESP()
+    espEnabled = not espEnabled
+    
+    if espEnabled then
+        createESP()
+        
+        table.insert(espConnections, Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function()
+                if espEnabled then
+                    removeESP()
+                    createESP()
+                end
+            end)
+        end))
+        
+        table.insert(espConnections, RunService.RenderStepped:Connect(updateESP))
+        
+        print("✅ ESP Aktif!")
+        return true
+    else
+        for _, conn in pairs(espConnections) do
+            conn:Disconnect()
+        end
+        espConnections = {}
+        removeESP()
+        print("❌ ESP Kapalı!")
+        return false
+    end
+end
+
+-- 2. KOORDİNAT TELEPORT (Teleport menüsüne entegre)
+local coordFrame = nil
+
+local function showCoordInput()
+    if coordFrame then coordFrame:Destroy() end
+    
+    coordFrame = Instance.new("Frame")
+    coordFrame.Size = UDim2.new(0, 280, 0, 180)
+    coordFrame.Position = UDim2.new(0.5, -140, 0.5, -90)
+    coordFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    coordFrame.BorderSizePixel = 0
+    coordFrame.Active = true
+    coordFrame.Draggable = true
+    coordFrame.Parent = LMG2L["ScreenGui_1"]
+    
+    Instance.new("UICorner", coordFrame).CornerRadius = UDim.new(0, 8)
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    title.Text = "KOORDINAT TP"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Font = Enum.Font.GothamBold
+    title.Parent = coordFrame
+    
+    local xBox = Instance.new("TextBox")
+    xBox.Size = UDim2.new(0.8, 0, 0, 25)
+    xBox.Position = UDim2.new(0.1, 0, 0.22, 0)
+    xBox.PlaceholderText = "X Koordinat"
+    xBox.Text = ""
+    xBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    xBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    xBox.Parent = coordFrame
+    
+    local yBox = Instance.new("TextBox")
+    yBox.Size = UDim2.new(0.8, 0, 0, 25)
+    yBox.Position = UDim2.new(0.1, 0, 0.42, 0)
+    yBox.PlaceholderText = "Y Koordinat"
+    yBox.Text = ""
+    yBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    yBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    yBox.Parent = coordFrame
+    
+    local zBox = Instance.new("TextBox")
+    zBox.Size = UDim2.new(0.8, 0, 0, 25)
+    zBox.Position = UDim2.new(0.1, 0, 0.62, 0)
+    zBox.PlaceholderText = "Z Koordinat"
+    zBox.Text = ""
+    zBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    zBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    zBox.Parent = coordFrame
+    
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(0.35, 0, 0, 25)
+    tpBtn.Position = UDim2.new(0.1, 0, 0.82, 0)
+    tpBtn.Text = "TELEPORT"
+    tpBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpBtn.Font = Enum.Font.GothamBold
+    tpBtn.Parent = coordFrame
+    
+    local currentBtn = Instance.new("TextButton")
+    currentBtn.Size = UDim2.new(0.35, 0, 0, 25)
+    currentBtn.Position = UDim2.new(0.55, 0, 0.82, 0)
+    currentBtn.Text = "MEVCUT"
+    currentBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    currentBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    currentBtn.Font = Enum.Font.GothamBold
+    currentBtn.Parent = coordFrame
+    
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 25, 0, 25)
+    closeBtn.Position = UDim2.new(1, -30, 0, 2)
+    closeBtn.Text = "X"
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.Parent = coordFrame
+    
+    tpBtn.MouseButton1Click:Connect(function()
+        local x = tonumber(xBox.Text)
+        local y = tonumber(yBox.Text)
+        local z = tonumber(zBox.Text)
+        
+        if x and y and z then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
+                print("✅ Teleport edildi: " .. x .. ", " .. y .. ", " .. z)
+                coordFrame:Destroy()
+                coordFrame = nil
+            end
+        else
+            print("❌ Geçerli koordinat girin!")
+        end
+    end)
+    
+    currentBtn.MouseButton1Click:Connect(function()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local pos = char.HumanoidRootPart.Position
+            xBox.Text = tostring(math.floor(pos.X))
+            yBox.Text = tostring(math.floor(pos.Y))
+            zBox.Text = tostring(math.floor(pos.Z))
+        end
+    end)
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        coordFrame:Destroy()
+        coordFrame = nil
+    end)
+end
+
+-- 3. FULLBRIGHT
+local function toggleFullbright()
+    fullbrightEnabled = not fullbrightEnabled
+    
+    if fullbrightEnabled then
+        local Lighting = game:GetService("Lighting")
+        
+        fullbrightConnection = RunService.RenderStepped:Connect(function()
+            Lighting.Brightness = 10
+            Lighting.GlobalShadows = false
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+            Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+            Lighting.FogEnd = 100000
+            Lighting.FogStart = 0
+        end)
+        
+        print("☀️ Fullbright Aktif!")
+        return true
+    else
+        if fullbrightConnection then
+            fullbrightConnection:Disconnect()
+            fullbrightConnection = nil
+        end
+        
+        local Lighting = game:GetService("Lighting")
+        Lighting.Brightness = 2
+        Lighting.GlobalShadows = true
+        Lighting.Ambient = Color3.fromRGB(127, 127, 127)
+        Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+        
+        print("🌑 Fullbright Kapalı!")
+        return false
+    end
+end
+
+-- 4. SERVER HOP
+local function serverHop()
+    print("🔄 Server Hop başlatılıyor...")
+    
+    local success, result = pcall(function()
+        local placeId = game.PlaceId
+        local servers = {}
+        local cursor = ""
+        
+        repeat
+            local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+            if cursor ~= "" then
+                url = url .. "&cursor=" .. cursor
+            end
+            
+            local response = game:HttpGet(url)
+            local data = HttpService:JSONDecode(response)
+            
+            for _, server in pairs(data.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    table.insert(servers, server.id)
+                end
+            end
+            
+            cursor = data.nextPageCursor or ""
+        until cursor == "" or #servers >= 10
+        
+        if #servers > 0 then
+            local randomServer = servers[math.random(1, #servers)]
+            print("🎯 Yeni sunucu: " .. randomServer)
+            TeleportService:TeleportToPlaceInstance(placeId, randomServer, LocalPlayer)
+        else
+            TeleportService:Teleport(placeId, LocalPlayer)
+        end
+    end)
+    
+    if not success then
+        print("❌ Hata: " .. tostring(result))
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    end
+end
+
+-- 5. CHAT SPY (Sürüklenebilir GUI)
+local function toggleChatSpy()
+    chatSpyEnabled = not chatSpyEnabled
+    
+    if chatSpyEnabled then
+        spyGui = Instance.new("ScreenGui")
+        spyGui.Name = "OK13_ChatSpy"
+        spyGui.Parent = CoreGui
+        
+        local spyFrame = Instance.new("Frame")
+        spyFrame.Size = UDim2.new(0, 300, 0, 200)
+        spyFrame.Position = UDim2.new(0, 10, 0.5, -100)
+        spyFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        spyFrame.BackgroundTransparency = 0.3
+        spyFrame.BorderSizePixel = 0
+        spyFrame.Active = true
+        spyFrame.Draggable = true
+        spyFrame.Parent = spyGui
+        
+        Instance.new("UICorner", spyFrame).CornerRadius = UDim.new(0, 8)
+        
+        local title = Instance.new("TextLabel")
+        title.Size = UDim2.new(1, 0, 0, 25)
+        title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        title.Text = "💬 CHAT SPY (Sürüklenebilir)"
+        title.TextColor3 = Color3.fromRGB(255, 255, 255)
+        title.Font = Enum.Font.GothamBold
+        title.Parent = spyFrame
+        
+        local scroll = Instance.new("ScrollingFrame")
+        scroll.Name = "SpyScroll"
+        scroll.Size = UDim2.new(1, -10, 1, -35)
+        scroll.Position = UDim2.new(0, 5, 0, 30)
+        scroll.BackgroundTransparency = 1
+        scroll.ScrollBarThickness = 5
+        scroll.Parent = spyFrame
+        
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 5)
+        layout.Parent = scroll
+        
+        local function onMessageReceived(text, player, isPrivate)
+            if isPrivate or not text then return end
+            
+            local msgLabel = Instance.new("TextLabel")
+            msgLabel.Size = UDim2.new(1, 0, 0, 20)
+            msgLabel.BackgroundTransparency = 1
+            msgLabel.Text = "[" .. (player and player.Name or "System") .. "]: " .. text
+            msgLabel.TextColor3 = player and (player == LocalPlayer and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255)) or Color3.fromRGB(255, 255, 0)
+            msgLabel.TextXAlignment = Enum.TextXAlignment.Left
+            msgLabel.Font = Enum.Font.Gotham
+            msgLabel.TextSize = 12
+            msgLabel.TextWrapped = true
+            msgLabel.Parent = scroll
+            
+            scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y)
+            scroll.CanvasPosition = Vector2.new(0, scroll.CanvasSize.Y.Offset)
+        end
+        
+        if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+            chatSpyConnection = TextChatService.MessageReceived:Connect(function(message)
+                onMessageReceived(message.Text, message.TextSource and Players:GetPlayerByUserId(message.TextSource.UserId), false)
+            end)
+        else
+            chatSpyConnection = Players.PlayerChatted:Connect(function(chatType, player, message)
+                onMessageReceived(message, player, chatType == Enum.PlayerChatType.Whisper)
+            end)
+        end
+        
+        print("🕵️ Chat Spy Aktif!")
+        return true
+    else
+        if chatSpyConnection then
+            chatSpyConnection:Disconnect()
+            chatSpyConnection = nil
+        end
+        if spyGui then
+            spyGui:Destroy()
+            spyGui = nil
+        end
+        print("🤐 Chat Spy Kapalı!")
+        return false
+    end
+end
+
+-- ===== DİĞER FONKSİYONLAR (Eski kodlar aynı) =====
+local function loadProfileImage()
+    local userId = LocalPlayer.UserId
+    local thumbType = Enum.ThumbnailType.HeadShot
+    local thumbSize = Enum.ThumbnailSize.Size420x420
+    
+    local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+    
+    if isReady then
+        LMG2L["ImageLabel_3b"].Image = content
+    else
+        LMG2L["ImageLabel_3b"].Image = "rbxassetid://92395758083316"
+    end
+end
+
+spawn(loadProfileImage)
+
+local function getCharacter()
+    local char = LocalPlayer.Character
+    if not char then
+        char = LocalPlayer.CharacterAdded:Wait()
+    end
+    local humanoid = char:WaitForChild("Humanoid")
+    local rootPart = char:WaitForChild("HumanoidRootPart")
+    return char, humanoid, rootPart
+end
+
+local function loadFlyScript()
+    loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-HD-Admin-Fly-29744"))()
+    LMG2L["TextButton_e"].Text = "FLY ✓"
+    print("Fly scripti yüklendi!")
+end
+
+local noclipConnection = nil
+local function toggleNoclip()
+    noclipEnabled = not noclipEnabled
+    
+    if noclipEnabled then
+        LMG2L["TextButton_10"].Text = "NOCLİP ✓"
+        noclipConnection = RunService.Stepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+        print("Noclip aktif!")
+    else
+        LMG2L["TextButton_10"].Text = "NOCLİP"
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        print("Noclip kapalı!")
+    end
+end
+
+local function resetCharacter()
+    local char = LocalPlayer.Character
+    if char then
+        char:BreakJoints()
+        print("Karakter resetlendi!")
+    end
+end
+
+local function loadF3X()
+    loadstring(game:GetObjects("rbxassetid://6695644299")[1].Source)()
+    print("F3X Building Tools yüklendi!")
+end
+
+local function setSpeed(value)
+    local _, humanoid = getCharacter()
+    local speed = tonumber(value)
+    if speed and speed > 0 then
+        humanoid.WalkSpeed = speed
+        print("Hız ayarlandı: " .. speed)
+    end
+end
+
+local function setJumpPower(value)
+    local _, humanoid = getCharacter()
+    local jumpPower = tonumber(value)
+    if jumpPower and jumpPower > 0 then
+        humanoid.JumpPower = jumpPower
+        print("Zıplama gücü ayarlandı: " .. jumpPower)
+    end
+end
+
+local spinConnection = nil
+local function toggleSpin()
+    spinEnabled = not spinEnabled
+    
+    if spinEnabled then
+        local spinSpeed = tonumber(LMG2L["TextBox_20"].Text) or 10
+        LMG2L["TextButton_1a"].Text = "SPİN ✓"
+        spinConnection = RunService.RenderStepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char.PrimaryPart then
+                char:SetPrimaryPartCFrame(char.PrimaryPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0))
+            end
+        end)
+        print("Spin aktif! Hız: " .. spinSpeed)
+    else
+        LMG2L["TextButton_1a"].Text = "SET"
+        if spinConnection then
+            spinConnection:Disconnect()
+            spinConnection = nil
+        end
+        print("Spin kapalı!")
+    end
+end
+
+local function rejoinServer()
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    print("Sunucuya yeniden katılıyor...")
+end
+
+local spawnPoint = nil
+local function setSpawnPoint()
+    local _, _, rootPart = getCharacter()
+    if rootPart then
+        spawnPoint = rootPart.CFrame
+        print("Spawn point ayarlandı!")
+    end
+end
+
+-- YENİ: Teleport menüsüne Koordinat sekmesi eklendi
+local function openTeleportMenu()
+    local teleportFrame = Instance.new("Frame")
+    teleportFrame.Size = UDim2.new(0, 320, 0, 400)
+    teleportFrame.Position = UDim2.new(0.5, -160, 0.5, -200)
+    teleportFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    teleportFrame.BorderSizePixel = 0
+    teleportFrame.Active = true
+    teleportFrame.Draggable = true
+    teleportFrame.Parent = LMG2L["ScreenGui_1"]
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Text = "TELEPORT MENÜSÜ"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    title.Font = Enum.Font.GothamBold
+    title.Parent = teleportFrame
+    
+    -- Sekme butonları
+    local playersTab = Instance.new("TextButton")
+    playersTab.Size = UDim2.new(0.5, 0, 0, 25)
+    playersTab.Position = UDim2.new(0, 0, 0, 30)
+    playersTab.Text = "PLAYERS"
+    playersTab.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    playersTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    playersTab.Parent = teleportFrame
+    
+    local coordTab = Instance.new("TextButton")
+    coordTab.Size = UDim2.new(0.5, 0, 0, 25)
+    coordTab.Position = UDim2.new(0.5, 0, 0, 30)
+    coordTab.Text = "COORDINATE"
+    coordTab.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    coordTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    coordTab.Parent = teleportFrame
+    
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Size = UDim2.new(1, -10, 1, -75)
+    contentFrame.Position = UDim2.new(0, 5, 0, 60)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Parent = teleportFrame
+    
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 100, 0, 30)
+    closeBtn.Position = UDim2.new(0.5, -50, 1, -35)
+    closeBtn.Text = "KAPAT"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    closeBtn.Parent = teleportFrame
+    
+    -- Oyuncular sekmesi içeriği
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    scrollFrame.ScrollBarThickness = 8
+    scrollFrame.Parent = contentFrame
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 30)
+            btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 35)
+            btn.Text = player.Name
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+            btn.Parent = scrollFrame
+            
+            btn.MouseButton1Click:Connect(function()
+                local targetChar = player.Character
+                local myChar = LocalPlayer.Character
+                if targetChar and targetChar:FindFirstChild("HumanoidRootPart") and myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    myChar.HumanoidRootPart.CFrame = targetChar.HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+                    print(player.Name .. " adlı oyuncuya ışınlandı!")
+                    teleportFrame:Destroy()
+                end
+            end)
+        end
+    end
+    
+    -- Koordinat sekmesi içeriği
+    local coordFrame = Instance.new("Frame")
+    coordFrame.Size = UDim2.new(1, 0, 1, 0)
+    coordFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    coordFrame.Visible = false
+    coordFrame.Parent = contentFrame
+    
+    local xBox = Instance.new("TextBox")
+    xBox.Size = UDim2.new(0.8, 0, 0, 30)
+    xBox.Position = UDim2.new(0.1, 0, 0.1, 0)
+    xBox.PlaceholderText = "X Koordinat"
+    xBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    xBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    xBox.Parent = coordFrame
+    
+    local yBox = Instance.new("TextBox")
+    yBox.Size = UDim2.new(0.8, 0, 0, 30)
+    yBox.Position = UDim2.new(0.1, 0, 0.3, 0)
+    yBox.PlaceholderText = "Y Koordinat"
+    yBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    yBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    yBox.Parent = coordFrame
+    
+    local zBox = Instance.new("TextBox")
+    zBox.Size = UDim2.new(0.8, 0, 0, 30)
+    zBox.Position = UDim2.new(0.1, 0, 0.5, 0)
+    zBox.PlaceholderText = "Z Koordinat"
+    zBox.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    zBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    zBox.Parent = coordFrame
+    
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(0.35, 0, 0, 30)
+    tpBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
+    tpBtn.Text = "TELEPORT"
+    tpBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    tpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpBtn.Parent = coordFrame
+    
+    local currentBtn = Instance.new("TextButton")
+    currentBtn.Size = UDim2.new(0.35, 0, 0, 30)
+    currentBtn.Position = UDim2.new(0.55, 0, 0.75, 0)
+    currentBtn.Text = "MEVCUT"
+    currentBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    currentBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    currentBtn.Parent = coordFrame
+    
+    -- Sekme değiştirme
+    playersTab.MouseButton1Click:Connect(function()
+        scrollFrame.Visible = true
+        coordFrame.Visible = false
+        playersTab.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+        coordTab.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    end)
+    
+    coordTab.MouseButton1Click:Connect(function()
+        scrollFrame.Visible = false
+        coordFrame.Visible = true
+        playersTab.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        coordTab.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    end)
+    
+    -- Koordinat teleport fonksiyonları
+    tpBtn.MouseButton1Click:Connect(function()
+        local x = tonumber(xBox.Text)
+        local y = tonumber(yBox.Text)
+        local z = tonumber(zBox.Text)
+        
+        if x and y and z then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
+                print("✅ Teleport edildi: " .. x .. ", " .. y .. ", " .. z)
+                teleportFrame:Destroy()
+            end
+        else
+            print("❌ Geçerli koordinat girin!")
+        end
+    end)
+    
+    currentBtn.MouseButton1Click:Connect(function()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local pos = char.HumanoidRootPart.Position
+            xBox.Text = tostring(math.floor(pos.X))
+            yBox.Text = tostring(math.floor(pos.Y))
+            zBox.Text = tostring(math.floor(pos.Z))
+        end
+    end)
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        teleportFrame:Destroy()
+    end)
+end
+
+local function generateFakeIP()
+    local fakeIPs = {
+        "192.168.1." .. math.random(1, 255),
+        "10.0.0." .. math.random(1, 255),
+        "172.16." .. math.random(1, 31) .. "." .. math.random(1, 255),
+        "89.216.123." .. math.random(1, 255),
+        "203.0.113." .. math.random(1, 255)
+    }
+    
+    local ip = fakeIPs[math.random(1, #fakeIPs)]
+    local locations = {"USA", "UK", "Germany", "Turkey", "Russia", "China", "Japan"}
+    local location = locations[math.random(1, #locations)]
+    
+    print("🕵️ FAKE IP: " .. ip .. " | Lokasyon: " .. location)
+    return ip
+end
+
+local function killPlayer()
+    loadstring(game:HttpGet("https://rawscripts.net/raw/Brookhaven-RP-FREEZE-ALL-FE-SOUND-MAP-KILL-NO-KEY-45235"))()
+    LMG2L["TextButton_29"].Text = "KİLL ✓"
+    print("Kill scripti yüklendi!")
+end
+
+local function flingPlayer()
+    local target = nil
+    local allPlayers = Players:GetPlayers()
+    for _, player in pairs(allPlayers) do
+        if player ~= LocalPlayer then
+            target = player
+            break
+        end
+    end
+    
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local myChar = LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = target.Character.HumanoidRootPart
+            local myHRP = myChar.HumanoidRootPart
+            
+            myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 3, 0)
+            wait(0.1)
+            
+            targetHRP.Velocity = Vector3.new(
+                math.random(-5000, 5000),
+                math.random(2000, 5000),
+                math.random(-5000, 5000)
+            )
+            
+            myHRP.Velocity = Vector3.new(0, 0, 0)
+            print(target.Name .. " adlı oyuncuya fling yapıldı!")
+        end
+    else
+        print("Fling için uygun hedef bulunamadı!")
+    end
+end
+
+local originalTransparencies = {}
+local function toggleInvisible()
+    invisibleEnabled = not invisibleEnabled
+    local char = LocalPlayer.Character
+    
+    if invisibleEnabled then
+        LMG2L["TextButton_2d"].Text = "İNVİS ✓"
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                originalTransparencies[part] = part.Transparency
+                part.Transparency = 1
+            end
+        end
+        print("Görünmezlik aktif!")
+    else
+        LMG2L["TextButton_2d"].Text = "İNVİSİBLE"
+        for part, transparency in pairs(originalTransparencies) do
+            if part.Parent then
+                part.Transparency = transparency
+            end
+        end
+        originalTransparencies = {}
+        print("Görünmezlik kapalı!")
+    end
+end
+
+local function smileyEffect()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Xkaka228X/Retro-mini-games-hub/refs/heads/main/README.md"))()
+    print(":) Retro Mini Games Hub yüklendi!")
+end
+
+local function scanForBackdoors()
+    print("🔍 Backdoor tarama başlatıldı...")
+    local suspicious = {}
+    local sss = game:GetService("ServerScriptService")
+    
+    for _, script in pairs(sss:GetDescendants()) do
+        if script:IsA("Script") or script:IsA("LocalScript") then
+            local name = script.Name:lower()
+            if name:find("backdoor") or name:find("bd") or name:find("hack") or name:find("exploit") then
+                table.insert(suspicious, {
+                    Object = script,
+                    Reason = "Şüpheli isim: " .. script.Name,
+                    Path = script:GetFullName()
+                })
+            end
+        end
+    end
+    
+    if #suspicious > 0 then
+        print("⚠️ " .. #suspicious .. " adet şüpheli obje bulundu:")
+        for i, item in ipairs(suspicious) do
+            print(i .. ". " .. item.Reason .. " | Path: " .. item.Path)
+        end
+    else
+        print("✅ Temiz: Backdoor bulunamadı!")
+    end
+    
+    LMG2L["TextLabel_33"].Text = "BACKDOOR-FOUND: " .. #suspicious
+end
+
+-- ScriptBlox fonksiyonları (Eski kodlar aynı)
+local scriptBloxFrame = nil
+local scriptBloxData = {}
+
+local function fetchScriptBloxScripts(query)
+    print("ScriptBlox'tan scriptler aranıyor: " .. (query or "popüler"))
+    
+    local success, response = pcall(function()
+        if query and query ~= "" then
+            return game:HttpGet("https://scriptblox.com/api/script/search?q=" .. query)
+        else
+            return game:HttpGet("https://scriptblox.com/api/script/fetch")
+        end
+    end)
+    
+    if success then
+        local ok, data = pcall(function()
+            return HttpService:JSONDecode(response)
+        end)
+        
+        if ok and data.result and data.result.scripts then
+            scriptBloxData = data.result.scripts
+            return true
+        end
+    end
+    
+    scriptBloxData = {
+        {title = "INFINITE YIELD", game = {name = "Universal"}, views = 1000000, scriptType = "FE", verified = true, 
+         script = "loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()"},
+        {title = "DEX EXPLORER", game = {name = "Universal"}, views = 500000, scriptType = "Explorer", verified = true,
+         script = "loadstring(game:HttpGet('https://raw.githubusercontent.com/infyiff/backup/main/dex.lua'))()"}
+    }
+    return true
+end
+
+local function executeScriptBloxScript(scriptData)
+    if scriptData.script then
+        print("Script yükleniyor: " .. scriptData.title)
+        local success, err = pcall(function()
+            loadstring(scriptData.script)()
+        end)
+        if success then
+            print("✅ Script başarıyla yüklendi!")
+        else
+            print("❌ Hata: " .. err)
+        end
+    end
+end
+
+local function showScriptBloxResults()
+    if not scriptBloxFrame then return end
+    
+    for _, child in ipairs(scriptBloxFrame:GetChildren()) do
+        if child.Name ~= "SearchBox" and child.Name ~= "SearchButton" and child.Name ~= "Title" then
+            child:Destroy()
+        end
+    end
+    
+    local scrollFrame = Instance.new("ScrollingFrame", scriptBloxFrame)
+    scrollFrame.Name = "ResultsScroll"
+    scrollFrame.Size = UDim2.new(1, -10, 0.8, -50)
+    scrollFrame.Position = UDim2.new(0, 5, 0, 50)
+    scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    scrollFrame.BackgroundTransparency = 0.7
+    scrollFrame.ScrollBarThickness = 8
+    scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    
+    local contentLayout = Instance.new("UIListLayout", scrollFrame)
+    contentLayout.Padding = UDim.new(0, 5)
+    
+    if #scriptBloxData > 0 then
+        for i, script in ipairs(scriptBloxData) do
+            if i > 10 then break end
+            
+            local scriptFrame = Instance.new("Frame", scrollFrame)
+            scriptFrame.Size = UDim2.new(1, -10, 0, 80)
+            scriptFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+            scriptFrame.BackgroundTransparency = 0.7
+            scriptFrame.BorderSizePixel = 0
+            
+            local titleLabel = Instance.new("TextLabel", scriptFrame)
+            titleLabel.Size = UDim2.new(0.7, 0, 0.4, 0)
+            titleLabel.Position = UDim2.new(0, 5, 0, 5)
+            titleLabel.Text = script.title
+            titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.TextScaled = true
+            
+            local gameLabel = Instance.new("TextLabel", scriptFrame)
+            gameLabel.Size = UDim2.new(0.7, 0, 0.3, 0)
+            gameLabel.Position = UDim2.new(0, 5, 0.4, 0)
+            gameLabel.Text = "Game: " .. (script.game and script.game.name or "Universal")
+            gameLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+            gameLabel.BackgroundTransparency = 1
+            gameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            
+            local executeBtn = Instance.new("TextButton", scriptFrame)
+            executeBtn.Size = UDim2.new(0.25, 0, 0.6, 0)
+            executeBtn.Position = UDim2.new(0.72, 0, 0.2, 0)
+            executeBtn.Text = "EXECUTE"
+            executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            executeBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+            
+            executeBtn.MouseButton1Click:Connect(function()
+                executeScriptBloxScript(script)
+            end)
+        end
+    end
+end
+
+local function showSearchPage()
+    if scriptBloxFrame then scriptBloxFrame:Destroy() end
+    
+    scriptBloxFrame = Instance.new("Frame", LMG2L["Frame_7"])
+    scriptBloxFrame.Size = UDim2.new(1, -10, 1, -10)
+    scriptBloxFrame.Position = UDim2.new(0, 5, 0, 5)
+    scriptBloxFrame.BackgroundTransparency = 1
+    scriptBloxFrame.Name = "ScriptBloxFrame"
+    
+    local title = Instance.new("TextLabel", scriptBloxFrame)
+    title.Name = "Title"
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Text = "SCRIPTBLOX SEARCH"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 20
+    
+    local searchBox = Instance.new("TextBox", scriptBloxFrame)
+    searchBox.Name = "SearchBox"
+    searchBox.Size = UDim2.new(0.7, 0, 0, 30)
+    searchBox.Position = UDim2.new(0.15, 0, 0, 35)
+    searchBox.PlaceholderText = "Script ara..."
+    searchBox.Text = ""
+    searchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    searchBox.BackgroundTransparency = 0.7
+    
+    local searchBtn = Instance.new("TextButton", scriptBloxFrame)
+    searchBtn.Name = "SearchButton"
+    searchBtn.Size = UDim2.new(0.2, 0, 0, 30)
+    searchBtn.Position = UDim2.new(0.65, 0, 0, 35)
+    searchBtn.Text = "ARA"
+    searchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    
+    spawn(function()
+        fetchScriptBloxScripts("")
+        showScriptBloxResults()
+    end)
+    
+    searchBtn.MouseButton1Click:Connect(function()
+        fetchScriptBloxScripts(searchBox.Text)
+        showScriptBloxResults()
+    end)
+    
+    searchBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            fetchScriptBloxScripts(searchBox.Text)
+            showScriptBloxResults()
+        end
+    end)
+end
+
+local codeFrame = nil
+local function showCodePage()
+    if codeFrame then codeFrame:Destroy() end
+    
+    codeFrame = Instance.new("Frame", LMG2L["Frame_7"])
+    codeFrame.Size = UDim2.new(1, -10, 1, -10)
+    codeFrame.Position = UDim2.new(0, 5, 0, 5)
+    codeFrame.BackgroundTransparency = 1
+    codeFrame.Name = "CodeFrame"
+    
+    local codeBox = Instance.new("TextBox", codeFrame)
+    codeBox.Size = UDim2.new(1, 0, 0.7, -10)
+    codeBox.Position = UDim2.new(0, 0, 0, 10)
+    codeBox.Text = "-- Kodunuzu buraya yazın\nprint(\"Merhaba OK-13!\")"
+    codeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    codeBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    codeBox.BackgroundTransparency = 0.7
+    codeBox.TextXAlignment = Enum.TextXAlignment.Left
+    codeBox.TextYAlignment = Enum.TextYAlignment.Top
+    codeBox.MultiLine = true
+    codeBox.TextWrapped = true
+    codeBox.Font = Enum.Font.Code
+    codeBox.TextSize = 12
+    
+    local executeBtn = Instance.new("TextButton", codeFrame)
+    executeBtn.Size = UDim2.new(0.3, 0, 0.1, 0)
+    executeBtn.Position = UDim2.new(0, 0, 0.75, 0)
+    executeBtn.Text = "EXECUTE"
+    executeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    executeBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    executeBtn.BackgroundTransparency = 0.7
+    
+    local cleanBtn = Instance.new("TextButton", codeFrame)
+    cleanBtn.Size = UDim2.new(0.3, 0, 0.1, 0)
+    cleanBtn.Position = UDim2.new(0.35, 0, 0.75, 0)
+    cleanBtn.Text = "CLEAN"
+    cleanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    cleanBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    cleanBtn.BackgroundTransparency = 0.7
+    
+    executeBtn.MouseButton1Click:Connect(function()
+        local success, err = pcall(function()
+            loadstring(codeBox.Text)()
+        end)
+        if not success then
+            warn("Kod hatası: " .. err)
+        end
+    end)
+    
+    cleanBtn.MouseButton1Click:Connect(function()
+        codeBox.Text = ""
+    end)
+end
+
+local function changePage(page)
+    currentPage = page
+    
+    local mainElements = {
+        LMG2L["TextButton_e"], LMG2L["TextButton_10"], LMG2L["TextButton_12"], LMG2L["TextButton_14"],
+        LMG2L["TextButton_16"], LMG2L["TextButton_18"], LMG2L["TextButton_1a"],
+        LMG2L["TextBox_1c"], LMG2L["TextBox_1e"], LMG2L["TextBox_20"],
+        LMG2L["TextButton_22"], LMG2L["TextButton_23"], LMG2L["TextButton_25"], LMG2L["TextButton_27"],
+        LMG2L["TextButton_29"], LMG2L["TextButton_2b"], LMG2L["TextButton_2d"], LMG2L["TextButton_2f"],
+        LMG2L["TextLabel_32"], LMG2L["TextLabel_33"], LMG2L["TextButton_34"],
+        LMG2L["TextBox_37"], LMG2L["TextButton_39"],
+        -- YENİ BUTONLAR
+        LMG2L["TextButton_ESP"], LMG2L["TextButton_FB"], LMG2L["TextButton_SH"], LMG2L["TextButton_CS"]
+    }
+    
+    if page == "MAIN" then
+        for _, element in pairs(mainElements) do
+            element.Visible = true
+        end
+        if scriptBloxFrame then 
+            scriptBloxFrame.Visible = false
+            scriptBloxFrame:Destroy()
+            scriptBloxFrame = nil
+        end
+        if codeFrame then 
+            codeFrame.Visible = false
+            codeFrame:Destroy()
+            codeFrame = nil
+        end
+    elseif page == "SEARCH" then
+        for _, element in pairs(mainElements) do
+            element.Visible = false
+        end
+        showSearchPage()
+        if codeFrame then 
+            codeFrame.Visible = false
+            codeFrame:Destroy()
+            codeFrame = nil
+        end
+    elseif page == "CODE" then
+        for _, element in pairs(mainElements) do
+            element.Visible = false
+        end
+        showCodePage()
+        if scriptBloxFrame then 
+            scriptBloxFrame.Visible = false
+            scriptBloxFrame:Destroy()
+            scriptBloxFrame = nil
+        end
+    end
+end
+
+local function toggleMinimize()
+    minimized = not minimized
+    
+    if minimized then
+        LMG2L["TextButton_d"].Text = "+"
+        
+        for _, child in pairs(LMG2L["Frame_7"]:GetChildren()) do
+            if child == LMG2L["ImageLabel_a"] or child == LMG2L["TextButton_c"] or child == LMG2L["TextButton_d"] then
+                child.Visible = true
+            else
+                child.Visible = false
+            end
+        end
+        
+        LMG2L["Frame_7"].Size = UDim2.new(0, 400, 0, 30)
+        LMG2L["ImageLabel_a"].Size = UDim2.new(0, 396, 0, 28)
+        
+    else
+        LMG2L["TextButton_d"].Text = "_"
+        
+        for _, child in pairs(LMG2L["Frame_7"]:GetChildren()) do
+            child.Visible = true
+        end
+        
+        LMG2L["Frame_7"].Size = UDim2.new(0, 400, 0, 324)
+        LMG2L["ImageLabel_a"].Size = UDim2.new(0, 396, 0, 320)
+        
+        changePage(currentPage)
+    end
+end
+
+-- ===== BUTON EVENT'LERİ =====
+LMG2L["TextButton_49"].MouseButton1Click:Connect(function()
+    guiEnabled = not guiEnabled
+    
+    if guiEnabled then
+        LMG2L["Frame_2"].Visible = true
+        LMG2L["Frame_7"].Visible = true
+        
+        LMG2L["Frame_2"].Position = UDim2.new(0.5, -400, 0.5, -163)
+        local tweenSol = TweenService:Create(LMG2L["Frame_2"], TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -250, 0.5, -163)
+        })
+        tweenSol:Play()
+        
+        LMG2L["Frame_7"].Position = UDim2.new(0, -100, 0, 0)
+        LMG2L["Frame_7"].BackgroundTransparency = 1
+        local tweenSag = TweenService:Create(LMG2L["Frame_7"], TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, 130, 0, 0),
+            BackgroundTransparency = 0.3
+        })
+        tweenSag:Play()
+        
+        for _, child in pairs(LMG2L["Frame_7"]:GetChildren()) do
+            if child:IsA("GuiObject") then
+                child.BackgroundTransparency = 1
+                TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = child.Name:find("Image") and 0 or 0.9}):Play()
+            end
+        end
+    else
+        local tweenSol = TweenService:Create(LMG2L["Frame_2"], TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, -400, 0.5, -163)
+        })
+        tweenSol:Play()
+        
+        local tweenSag = TweenService:Create(LMG2L["Frame_7"], TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(0, -100, 0, 0),
+            BackgroundTransparency = 1
+        })
+        tweenSag:Play()
+        
+        tweenSag.Completed:Connect(function()
+            LMG2L["Frame_2"].Visible = false
+            LMG2L["Frame_7"].Visible = false
+        end)
+    end
+end)
+
+LMG2L["TextButton_c"].MouseButton1Click:Connect(function()
+    guiEnabled = false
+    
+    -- Tüm sistemleri kapat
+    if espEnabled then toggleESP() end
+    if fullbrightEnabled then toggleFullbright() end
+    if chatSpyEnabled then toggleChatSpy() end
+    
+    local tweenSol = TweenService:Create(LMG2L["Frame_2"], TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Position = UDim2.new(0.5, -400, 0.5, -163)
+    })
+    tweenSol:Play()
+    
+    local tweenSag = TweenService:Create(LMG2L["Frame_7"], TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Position = UDim2.new(0, -100, 0, 0),
+        BackgroundTransparency = 1
+    })
+    tweenSag:Play()
+    
+    tweenSag.Completed:Connect(function()
+        LMG2L["Frame_2"].Visible = false
+        LMG2L["Frame_7"].Visible = false
+    end)
+end)
+
+LMG2L["TextButton_d"].MouseButton1Click:Connect(toggleMinimize)
+
+-- Ana sayfa butonları
+LMG2L["TextButton_e"].MouseButton1Click:Connect(loadFlyScript)
+LMG2L["TextButton_10"].MouseButton1Click:Connect(toggleNoclip)
+LMG2L["TextButton_12"].MouseButton1Click:Connect(resetCharacter)
+LMG2L["TextButton_14"].MouseButton1Click:Connect(loadF3X)
+
+-- Speed, JumpPower, Spin butonları
+LMG2L["TextButton_16"].MouseButton1Click:Connect(function()
+    setSpeed(LMG2L["TextBox_1c"].Text)
+end)
+
+LMG2L["TextButton_18"].MouseButton1Click:Connect(function()
+    setJumpPower(LMG2L["TextBox_1e"].Text)
+end)
+
+LMG2L["TextButton_1a"].MouseButton1Click:Connect(toggleSpin)
+
+-- YENİ: 4. satır butonları (ESP, Fullbright, Server Hop, Chat Spy)
+local espActive = false
+LMG2L["TextButton_ESP"].MouseButton1Click:Connect(function()
+    espActive = toggleESP()
+    LMG2L["TextButton_ESP"].Text = espActive and "ESP ✓" or "ESP"
+end)
+
+local fbActive = false
+LMG2L["TextButton_FB"].MouseButton1Click:Connect(function()
+    fbActive = toggleFullbright()
+    LMG2L["TextButton_FB"].Text = fbActive and "FULLBRIGHT ✓" or "FULLBRIGHT"
+end)
+
+LMG2L["TextButton_SH"].MouseButton1Click:Connect(serverHop)
+
+local csActive = false
+LMG2L["TextButton_CS"].MouseButton1Click:Connect(function()
+    csActive = toggleChatSpy()
+    LMG2L["TextButton_CS"].Text = csActive and "CHAT SPY ✓" or "CHAT SPY"
+end)
+
+-- Alt butonlar (5. ve 6. satır - aşağı kaydırıldı)
+LMG2L["TextButton_22"].MouseButton1Click:Connect(rejoinServer)
+LMG2L["TextButton_23"].MouseButton1Click:Connect(setSpawnPoint)
+LMG2L["TextButton_25"].MouseButton1Click:Connect(openTeleportMenu)
+LMG2L["TextButton_27"].MouseButton1Click:Connect(generateFakeIP)
+LMG2L["TextButton_29"].MouseButton1Click:Connect(killPlayer)
+LMG2L["TextButton_2b"].MouseButton1Click:Connect(flingPlayer)
+LMG2L["TextButton_2d"].MouseButton1Click:Connect(toggleInvisible)
+LMG2L["TextButton_2f"].MouseButton1Click:Connect(smileyEffect)
+
+-- Backdoor scan ve Require
+LMG2L["TextButton_34"].MouseButton1Click:Connect(scanForBackdoors)
+
+LMG2L["TextButton_39"].MouseButton1Click:Connect(function()
+    local requireText = LMG2L["TextBox_37"].Text
+    local id = requireText:match("%d+")
+    
+    if id then
+        print("Require script yükleniyor: " .. id)
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/scripts/" .. id .. "/main/script.lua"))()
+    else
+        print("Geçerli bir ID girin!")
+    end
+end)
+
+-- Sol panel butonları
+LMG2L["TextButton_41"].MouseButton1Click:Connect(function()
+    changePage("MAIN")
+end)
+
+LMG2L["TextButton_43"].MouseButton1Click:Connect(function()
+    changePage("SEARCH")
+end)
+
+LMG2L["TextButton_45"].MouseButton1Click:Connect(function()
+    changePage("CODE")
+end)
+
+-- Tuş kontrolleri
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.F then
+        LMG2L["TextButton_49"]:MouseButton1Click()
+    end
+    
+    if input.KeyCode == Enum.KeyCode.Minus or input.KeyCode == Enum.KeyCode.LeftBracket or input.KeyCode == Enum.KeyCode.Underscore then
+        if guiEnabled then
+            toggleMinimize()
+        end
+    end
+end)
+
+-- Drag sistemi
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    LMG2L["Frame_2"].Position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X, 
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+    LMG2L["Frame_7"].Position = UDim2.new(
+        0, 
+        startPos.X.Offset + delta.X + 130, 
+        0, 
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+LMG2L["Frame_2"].InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = LMG2L["Frame_2"].Position
+    end
+end)
+
+LMG2L["Frame_2"].InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        updateDrag(input)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- Başlangıç ayarları
+changePage("MAIN")
+
+guiEnabled = false
+LMG2L["Frame_2"].Visible = false
+LMG2L["Frame_7"].Visible = false
+
+print("✅ OK-13 ADMIN GUI v2.0 yüklendi!")
+print("Yeni özellikler: ESP, Koordinat TP, Fullbright, Server Hop, Chat Spy")
+
+return LMG2L["ScreenGui_1"]
